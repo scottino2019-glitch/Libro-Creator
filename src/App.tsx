@@ -21,7 +21,6 @@ interface BookPage {
   note?: string;
   italianTitle?: string;
   italianLines?: string[];
-  backgroundImage?: string;
 }
 
 // --- Utils ---
@@ -107,15 +106,8 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
         {pages.map((page) => (
           <div key={page.id} className="bg-white p-8 border border-gray-200 rounded-lg shadow-sm break-after-page">
              {page.type === 'cover' ? (
-               <div 
-                 className="text-center py-20 bg-[#2c3e50] text-white rounded-lg" 
-                 style={{ 
-                   backgroundImage: page.backgroundImage ? `url(${page.backgroundImage.startsWith('http') || page.backgroundImage.startsWith('/') ? page.backgroundImage : `/${page.backgroundImage}`})` : 'none',
-                   backgroundSize: 'cover',
-                   backgroundPosition: 'center'
-                 }}
-               >
-                 <div className="bg-black/30 p-10 rounded-lg backdrop-blur-sm inline-block">
+               <div className="text-center py-20 bg-[#2c3e50] text-white rounded-lg">
+                 <div className="p-10 inline-block">
                    <h1 className="text-5xl font-zhi-mang mb-4">{page.title}</h1>
                    <h2 className="text-2xl font-cormorant italic opacity-90">{page.italianTitle}</h2>
                  </div>
@@ -163,8 +155,8 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
         {pages.map((page, index) => {
           if (page.type === 'cover') {
             return (
-              <div key={page.id} className="page cover" style={{ backgroundImage: page.backgroundImage ? `url(${page.backgroundImage.startsWith('http') || page.backgroundImage.startsWith('/') ? page.backgroundImage : `/${page.backgroundImage}`})` : 'none' }}>
-                <div className="text-center p-10 bg-black/20 backdrop-blur-[2px] rounded-xl">
+              <div key={page.id} className="page cover">
+                <div className="text-center p-10">
                   <h1 className="text-4xl font-zhi-mang mb-4 text-white drop-shadow-lg">{page.title}</h1>
                   <h2 className="text-xl font-cormorant italic opacity-90 text-white drop-shadow-md">{page.italianTitle}</h2>
                 </div>
@@ -244,8 +236,7 @@ const INITIAL_PAGES: BookPage[] = [
     id: 'cover-1',
     type: 'cover',
     title: 'Libro Cinese-Italiano',
-    italianTitle: 'Poesie e Racconti',
-    backgroundImage: 'cover.png'
+    italianTitle: 'Poesie e Racconti'
   },
   {
     id: 'page-1',
@@ -372,8 +363,8 @@ export default function App() {
         ${pages.map((page, index) => {
             if (page.type === 'cover') {
                 return `
-                    <div class="page cover" style="background-image: ${page.backgroundImage ? `url(${page.backgroundImage.startsWith('/') ? page.backgroundImage.substring(1) : page.backgroundImage})` : 'none'}">
-                        <div class="text-center p-10 bg-black/20 backdrop-blur-[2px] rounded-xl">
+                    <div class="page cover">
+                        <div class="text-center p-10">
                             <h1 class="text-4xl font-zhi-mang mb-4 text-white">${page.title || ''}</h1>
                             <h2 class="text-xl font-cormorant italic opacity-90 text-white">${page.italianTitle || ''}</h2>
                         </div>
@@ -573,29 +564,6 @@ export default function App() {
               </button>
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
-              {editingPage?.type === 'cover' && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Percorso Immagine di Copertina</label>
-                    <input 
-                      type="text"
-                      className="w-full border rounded-lg px-3 py-2 text-sm" 
-                      placeholder="es. cover.png"
-                      value={editingPage?.backgroundImage || ''} 
-                      onChange={e => setEditingPage({...editingPage!, backgroundImage: e.target.value})}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Usa il nome del file caricato nella cartella public (es. <strong>cover.png</strong>)
-                    </p>
-                    {editingPage?.backgroundImage && (
-                      <div className="mt-2 relative w-32 h-44 rounded-lg overflow-hidden border shadow-sm">
-                        <img src={editingPage.backgroundImage.startsWith('/') ? editingPage.backgroundImage : `/${editingPage.backgroundImage}`} className="w-full h-full object-cover" alt="Preview" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Titolo Cinese</label>
