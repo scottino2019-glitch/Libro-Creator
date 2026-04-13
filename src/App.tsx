@@ -36,12 +36,16 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
   const flipRef = useRef<PageFlip | null>(null);
 
   useEffect(() => {
+    console.log("Book component effect running with pages:", pages.length);
     if (!bookRef.current) return;
 
     if (flipRef.current) {
       try {
         flipRef.current.destroy();
-      } catch (e) {}
+        console.log("Old PageFlip destroyed");
+      } catch (e) {
+        console.warn("Error destroying PageFlip:", e);
+      }
       flipRef.current = null;
     }
 
@@ -49,6 +53,7 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
       if (!bookRef.current) return;
 
       try {
+        console.log("Initializing PageFlip...");
         const flip = new PageFlip(bookRef.current, {
           width: 400,
           height: 550,
@@ -72,14 +77,18 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
         });
 
         const pageElements = bookRef.current.querySelectorAll('.page');
+        console.log("Found page elements:", pageElements.length);
         if (pageElements.length > 0) {
           flip.loadFromHTML(pageElements);
           flipRef.current = flip;
+          console.log("PageFlip loaded successfully");
+        } else {
+          console.warn("No page elements found to load into PageFlip");
         }
       } catch (error) {
         console.error("Failed to initialize PageFlip:", error);
       }
-    }, 100);
+    }, 500);
 
     return () => {
       clearTimeout(timer);
@@ -150,7 +159,7 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
         ))}
       </div>
 
-      <div ref={bookRef} className="book-container print:hidden">
+      <div ref={bookRef} className="book-container print:hidden min-h-[550px]">
         {pages.map((page, index) => {
           if (page.type === 'cover') {
             return (
