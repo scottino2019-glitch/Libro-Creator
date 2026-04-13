@@ -30,26 +30,14 @@ function cn(...classes: (string | boolean | undefined)[]) {
 
 // --- Components ---
 
-const Book: React.FC<{ pages: BookPage[], refreshCounter: number }> = React.memo(({ pages, refreshCounter }) => {
+// --- Components ---
+
+const BookInner: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const flipRef = useRef<PageFlip | null>(null);
 
   useEffect(() => {
     if (!bookRef.current) return;
-
-    // Cleanup function to destroy previous instance
-    const cleanup = () => {
-      if (flipRef.current) {
-        try {
-          flipRef.current.destroy();
-        } catch (e) {
-          console.warn("Cleanup error:", e);
-        }
-        flipRef.current = null;
-      }
-    };
-
-    cleanup();
 
     const timer = setTimeout(() => {
       if (!bookRef.current) return;
@@ -83,18 +71,111 @@ const Book: React.FC<{ pages: BookPage[], refreshCounter: number }> = React.memo
           flipRef.current = flip;
         }
       } catch (error) {
-        console.error("Failed to initialize PageFlip:", error);
+        console.error("PageFlip Init Error:", error);
       }
-    }, 300);
+    }, 100);
 
     return () => {
       clearTimeout(timer);
-      cleanup();
+      if (flipRef.current) {
+        try {
+          flipRef.current.destroy();
+        } catch (e) {}
+        flipRef.current = null;
+      }
     };
+  }, []); // Only run once on mount
+
+  return (
+    <div ref={bookRef} className="book-container print:hidden min-h-[550px] shadow-2xl">
+      {pages.map((page, index) => {
+        if (page.type === 'cover') {
+          return (
+            <div key={page.id} className="page cover">
+              <div className="text-center p-10">
+                <h1 className="text-4xl font-zhi-mang mb-4 text-white drop-shadow-lg">{page.title}</h1>
+                <h2 className="text-xl font-cormorant italic opacity-90 text-white drop-shadow-md">{page.italianTitle}</h2>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <React.Fragment key={page.id}>
+            <div className="page --left">
+              <div className="flex flex-col items-center w-full h-full p-2">
+                {page.title && (
+                  <h1 className="font-zhi-mang text-3xl text-[#2a1f15] text-center mb-2">
+                    <ruby>
+                      {page.title}
+                      <rt className="font-long-cang text-xl text-[#8b7e6a] pb-2">{page.pinyinTitle}</rt>
+                    </ruby>
+                  </h1>
+                )}
+                <div className="font-ma-shan text-4xl leading-[1.8] text-[#1f150f] text-center mb-10">
+                  {page.chineseLines?.map((line, i) => (
+                    <div key={i}>
+                      <ruby>
+                        {line.chinese}
+                        <rt className="font-long-cang text-lg text-[#8b7e6a]">{line.pinyin}</rt>
+                      </ruby>
+                      {i < (page.chineseLines?.length || 0) - 1 && <br />}
+                    </div>
+                  ))}
+                </div>
+                {page.author && (
+                  <div className="mt-auto font-zhi-mang text-xl text-gray-500 text-center">
+                    <ruby>
+                      {page.author}
+                      <rt className="font-long-cang text-base text-[#8b7e6a]">{page.pinyinAuthor}</rt>
+                    </ruby>
+                  </div>
+                )}
+              </div>
+              <div className="page-number">{index * 2 + 1}</div>
+            </div>
+            <div className="page --right">
+              <div className="flex flex-col w-full h-full">
+                {page.note && (
+                  <div className="relative max-w-[550px] mx-auto mb-10 p-2 border-l-2 border-[#d4c8a8] bg-[rgba(255,252,245,0.6)]">
+                    <span className="absolute -top-3 left-4 bg-[#fefdf9] px-2 font-single-day text-[10px] text-[#b8a89d] uppercase">
+                      Nota dell'autore
+                    </span>
+                    <p className="font-long-cang text-xl text-[#5a4a3a] leading-tight">
+                      "{page.note}"
+                    </p>
+                  </div>
+                )}
+                <div className="text-center max-w-[400px] mx-auto">
+                  <h2 className="font-single-day text-sm text-red-600 mb-5 uppercase tracking-wider">
+                    Traduzione italiana
+                  </h2>
+                  <div className="font-nanum text-lg leading-tight text-[#3a2a1a]">
+                    <strong className="block text-[1.8em] mb-2 font-noto-sans">{page.italianTitle}</strong>
+                    {page.italianLines?.map((line, i) => (
+                      <p key={i} className="mb-1">{line}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="page-number">{index * 2 + 2}</div>
+            </div>
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
+const Book: React.FC<{ pages: BookPage[], refreshCounter: number }> = React.memo(({ pages, refreshCounter }) => {
+  // Use a key that changes only when the data we care about changes
+  // This forces a full remount of BookInner, ensuring PageFlip starts fresh
+  const remountKey = React.useMemo(() => {
+    return `${pages.length}-${pages.map(p => p.id).join('-')}-${refreshCounter}`;
   }, [pages, refreshCounter]);
 
   return (
     <div className="flex flex-col items-center min-h-[600px] w-full py-10 print:py-0">
+      {/* Print View (Static) */}
       <div className="hidden print:block w-full space-y-8">
         {pages.map((page) => (
           <div key={page.id} className="bg-white p-8 border border-gray-200 rounded-lg shadow-sm break-after-page">
@@ -144,86 +225,8 @@ const Book: React.FC<{ pages: BookPage[], refreshCounter: number }> = React.memo
         ))}
       </div>
 
-      <div 
-        key={`book-container-${pages.length}-${pages.map(p => p.id).join('-')}-${refreshCounter}`} 
-        ref={bookRef} 
-        className="book-container print:hidden min-h-[550px]"
-      >
-        {pages.map((page, index) => {
-          if (page.type === 'cover') {
-            return (
-              <div key={page.id} className="page cover">
-                <div className="text-center p-10">
-                  <h1 className="text-4xl font-zhi-mang mb-4 text-white drop-shadow-lg">{page.title}</h1>
-                  <h2 className="text-xl font-cormorant italic opacity-90 text-white drop-shadow-md">{page.italianTitle}</h2>
-                </div>
-              </div>
-            );
-          }
-          return (
-            <React.Fragment key={page.id}>
-              <div className="page --left">
-                <div className="flex flex-col items-center w-full h-full p-2">
-                  {page.title && (
-                    <h1 className="font-zhi-mang text-3xl text-[#2a1f15] text-center mb-2">
-                      <ruby>
-                        {page.title}
-                        <rt className="font-long-cang text-xl text-[#8b7e6a] pb-2">{page.pinyinTitle}</rt>
-                      </ruby>
-                    </h1>
-                  )}
-                  <div className="font-ma-shan text-4xl leading-[1.8] text-[#1f150f] text-center mb-10">
-                    {page.chineseLines?.map((line, i) => (
-                      <div key={i}>
-                        <ruby>
-                          {line.chinese}
-                          <rt className="font-long-cang text-lg text-[#8b7e6a]">{line.pinyin}</rt>
-                        </ruby>
-                        {i < (page.chineseLines?.length || 0) - 1 && <br />}
-                      </div>
-                    ))}
-                  </div>
-                  {page.author && (
-                    <div className="mt-auto font-zhi-mang text-xl text-gray-500 text-center">
-                      <ruby>
-                        {page.author}
-                        <rt className="font-long-cang text-base text-[#8b7e6a]">{page.pinyinAuthor}</rt>
-                      </ruby>
-                    </div>
-                  )}
-                </div>
-                <div className="page-number">{index * 2 + 1}</div>
-              </div>
-              <div className="page --right">
-                <div className="flex flex-col w-full h-full">
-                  {page.note && (
-                    <div className="relative max-w-[550px] mx-auto mb-10 p-2 border-l-2 border-[#d4c8a8] bg-[rgba(255,252,245,0.6)]">
-                      <span className="absolute -top-3 left-4 bg-[#fefdf9] px-2 font-single-day text-[10px] text-[#b8a89d] uppercase">
-                        Nota dell'autore
-                      </span>
-                      <p className="font-long-cang text-xl text-[#5a4a3a] leading-tight">
-                        "{page.note}"
-                      </p>
-                    </div>
-                  )}
-                  <div className="text-center max-w-[400px] mx-auto">
-                    <h2 className="font-single-day text-sm text-red-600 mb-5 uppercase tracking-wider">
-                      Traduzione italiana
-                    </h2>
-                    <div className="font-nanum text-lg leading-tight text-[#3a2a1a]">
-                      <strong className="block text-[1.8em] mb-2 font-noto-sans">{page.italianTitle}</strong>
-                      {page.italianLines?.map((line, i) => (
-                        <p key={i} className="mb-1">{line}</p>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="page-number">{index * 2 + 2}</div>
-              </div>
-            </React.Fragment>
-          );
-        })}
-      </div>
+      {/* Interactive View (PageFlip) */}
+      <BookInner key={remountKey} pages={pages} />
     </div>
   );
 }, (prev, next) => prev.pages === next.pages && prev.refreshCounter === next.refreshCounter);
