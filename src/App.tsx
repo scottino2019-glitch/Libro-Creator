@@ -1,0 +1,508 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Book as BookIcon, Edit2, Download, Upload, Printer, X } from 'lucide-react';
+import { PageFlip } from 'page-flip';
+
+// --- Types ---
+type PageType = 'cover' | 'content';
+
+interface PoemLine {
+  chinese: string;
+  pinyin: string;
+}
+
+interface BookPage {
+  id: string;
+  type: PageType;
+  title?: string;
+  pinyinTitle?: string;
+  chineseLines?: PoemLine[];
+  author?: string;
+  pinyinAuthor?: string;
+  note?: string;
+  italianTitle?: string;
+  italianLines?: string[];
+  backgroundImage?: string;
+}
+
+// --- Utils ---
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ');
+}
+
+// --- Components ---
+
+const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
+  const bookRef = useRef<HTMLDivElement>(null);
+  const flipRef = useRef<PageFlip | null>(null);
+
+  useEffect(() => {
+    if (!bookRef.current) return;
+
+    if (flipRef.current) {
+      try {
+        flipRef.current.destroy();
+      } catch (e) {}
+      flipRef.current = null;
+    }
+
+    const timer = setTimeout(() => {
+      if (!bookRef.current) return;
+
+      try {
+        const flip = new PageFlip(bookRef.current, {
+          width: 400,
+          height: 550,
+          size: "fixed",
+          minWidth: 300,
+          maxWidth: 500,
+          minHeight: 400,
+          maxHeight: 650,
+          showCover: true,
+          mobileScrollSupport: true,
+          maxShadowOpacity: 0.5,
+          flippingTime: 800,
+          usePortrait: false,
+          startPage: 0,
+          drawShadow: true,
+          clickEventForward: true,
+          useMouseEvents: true,
+          swipeDistance: 30,
+          showPageCorners: true,
+          disableFlipByClick: false,
+        });
+
+        const pageElements = bookRef.current.querySelectorAll('.page');
+        if (pageElements.length > 0) {
+          flip.loadFromHTML(pageElements);
+          flipRef.current = flip;
+        }
+      } catch (error) {
+        console.error("Failed to initialize PageFlip:", error);
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (flipRef.current) {
+        try {
+          flipRef.current.destroy();
+        } catch (e) {}
+        flipRef.current = null;
+      }
+    };
+  }, [pages]);
+
+  return (
+    <div className="flex flex-col items-center min-h-[600px] w-full py-10 print:py-0">
+      <div className="hidden print:block w-full space-y-8">
+        {pages.map((page) => (
+          <div key={page.id} className="bg-white p-8 border border-gray-200 rounded-lg shadow-sm break-after-page">
+             {page.type === 'cover' ? (
+               <div className="text-center py-20">
+                 <h1 className="text-5xl font-zhi-mang mb-4">{page.title}</h1>
+                 <h2 className="text-2xl font-cormorant italic opacity-80">{page.italianTitle}</h2>
+               </div>
+             ) : (
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="space-y-6">
+                    <h1 className="font-zhi-mang text-3xl text-[#2a1f15] text-center mb-2">
+                      <ruby>
+                        {page.title}
+                        <rt className="font-long-cang text-xl text-[#8b7e6a] pb-2">{page.pinyinTitle}</rt>
+                      </ruby>
+                    </h1>
+                    <div className="font-ma-shan text-4xl leading-[1.8] text-[#1f150f] text-center">
+                      {page.chineseLines?.map((line, i) => (
+                        <div key={i}>
+                          <ruby>
+                            {line.chinese}
+                            <rt className="font-long-cang text-lg text-[#8b7e6a]">{line.pinyin}</rt>
+                          </ruby>
+                        </div>
+                      ))}
+                    </div>
+                 </div>
+                 <div className="space-y-6 border-l md:pl-8 border-gray-100">
+                    <div className="text-center">
+                      <h2 className="font-single-day text-sm text-red-600 mb-5 uppercase tracking-wider">
+                        Traduzione italiana
+                      </h2>
+                      <div className="font-nanum text-lg leading-tight text-[#3a2a1a]">
+                        <strong className="block text-[1.8em] mb-2 font-noto-sans">{page.italianTitle}</strong>
+                        {page.italianLines?.map((line, i) => (
+                          <p key={i} className="mb-1">{line}</p>
+                        ))}
+                      </div>
+                    </div>
+                 </div>
+               </div>
+             )}
+          </div>
+        ))}
+      </div>
+
+      <div ref={bookRef} className="book-container print:hidden">
+        {pages.map((page, index) => {
+          if (page.type === 'cover') {
+            return (
+              <div key={page.id} className="page cover" style={{ backgroundImage: page.backgroundImage ? `url(${page.backgroundImage})` : 'none' }}>
+                {!page.backgroundImage && (
+                  <div className="text-center p-10">
+                    <h1 className="text-4xl font-zhi-mang mb-4">{page.title}</h1>
+                    <h2 className="text-xl font-cormorant italic opacity-80">{page.italianTitle}</h2>
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return (
+            <React.Fragment key={page.id}>
+              <div className="page --left">
+                <div className="flex flex-col items-center w-full h-full p-2">
+                  {page.title && (
+                    <h1 className="font-zhi-mang text-3xl text-[#2a1f15] text-center mb-2">
+                      <ruby>
+                        {page.title}
+                        <rt className="font-long-cang text-xl text-[#8b7e6a] pb-2">{page.pinyinTitle}</rt>
+                      </ruby>
+                    </h1>
+                  )}
+                  <div className="font-ma-shan text-4xl leading-[1.8] text-[#1f150f] text-center mb-10">
+                    {page.chineseLines?.map((line, i) => (
+                      <div key={i}>
+                        <ruby>
+                          {line.chinese}
+                          <rt className="font-long-cang text-lg text-[#8b7e6a]">{line.pinyin}</rt>
+                        </ruby>
+                        {i < (page.chineseLines?.length || 0) - 1 && <br />}
+                      </div>
+                    ))}
+                  </div>
+                  {page.author && (
+                    <div className="mt-auto font-zhi-mang text-xl text-gray-500 text-center">
+                      <ruby>
+                        {page.author}
+                        <rt className="font-long-cang text-base text-[#8b7e6a]">{page.pinyinAuthor}</rt>
+                      </ruby>
+                    </div>
+                  )}
+                </div>
+                <div className="page-number">{index * 2 + 1}</div>
+              </div>
+              <div className="page --right">
+                <div className="flex flex-col w-full h-full">
+                  {page.note && (
+                    <div className="relative max-w-[550px] mx-auto mb-10 p-2 border-l-2 border-[#d4c8a8] bg-[rgba(255,252,245,0.6)]">
+                      <span className="absolute -top-3 left-4 bg-[#fefdf9] px-2 font-single-day text-[10px] text-[#b8a89d] uppercase">
+                        Nota dell'autore
+                      </span>
+                      <p className="font-long-cang text-xl text-[#5a4a3a] leading-tight">
+                        "{page.note}"
+                      </p>
+                    </div>
+                  )}
+                  <div className="text-center max-w-[400px] mx-auto">
+                    <h2 className="font-single-day text-sm text-red-600 mb-5 uppercase tracking-wider">
+                      Traduzione italiana
+                    </h2>
+                    <div className="font-nanum text-lg leading-tight text-[#3a2a1a]">
+                      <strong className="block text-[1.8em] mb-2 font-noto-sans">{page.italianTitle}</strong>
+                      {page.italianLines?.map((line, i) => (
+                        <p key={i} className="mb-1">{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="page-number">{index * 2 + 2}</div>
+              </div>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const INITIAL_PAGES: BookPage[] = [
+  {
+    id: 'cover-1',
+    type: 'cover',
+    title: 'Libro Cinese-Italiano',
+    italianTitle: 'Poesie e Racconti',
+    backgroundImage: 'cover.png'
+  },
+  {
+    id: 'page-1',
+    type: 'content',
+    title: '赋得古原草送别',
+    pinyinTitle: 'fù dé gǔ yuán cǎo sòng bié',
+    chineseLines: [
+      { chinese: '离离原上草', pinyin: 'lí lí yuán shàng cǎo' },
+      { chinese: '一岁一枯荣', pinyin: 'yī suì yī kū róng' },
+      { chinese: '野火烧不尽', pinyin: 'yě huǒ shāo bù jìn' },
+      { chinese: '春风吹又生', pinyin: 'chūn fēng chuī yòu shēng' }
+    ],
+    author: '白居易',
+    pinyinAuthor: 'bái jū yì',
+    note: 'Questa poesia parla della resilienza della natura.',
+    italianTitle: 'L\'erba della pianura',
+    italianLines: [
+      'Lussureggiante l\'erba sulla pianura,',
+      'Ogni anno appassisce e rifiorisce.',
+      'Il fuoco selvaggio non può consumarla del tutto,',
+      'Il vento di primavera soffia e rinasce.'
+    ]
+  }
+];
+
+export default function App() {
+  const [pages, setPages] = useState<BookPage[]>(INITIAL_PAGES);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingPage, setEditingPage] = useState<BookPage | null>(null);
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(pages, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = 'libro_cinese_italiano.json';
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const importedPages = JSON.parse(e.target?.result as string);
+        setPages(importedPages);
+      } catch (err) {
+        alert("Errore nell'importazione del file.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleAddPage = () => {
+    const newPage: BookPage = {
+      id: `page-${Date.now()}`,
+      type: 'content',
+      title: '',
+      pinyinTitle: '',
+      chineseLines: [{ chinese: '', pinyin: '' }],
+      italianTitle: '',
+      italianLines: ['']
+    };
+    setEditingPage(newPage);
+    setIsEditorOpen(true);
+  };
+
+  const handleSavePage = (page: BookPage) => {
+    if (pages.find(p => p.id === page.id)) {
+      setPages(pages.map(p => p.id === page.id ? page : p));
+    } else {
+      setPages([...pages, page]);
+    }
+    setIsEditorOpen(false);
+    setEditingPage(null);
+  };
+
+  const handleDeletePage = (id: string) => {
+    if (confirm("Sei sicuro di voler eliminare questa pagina?")) {
+      setPages(pages.filter(p => p.id !== id));
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f5f0e6] text-[#2c3e50] font-noto-sans">
+      <header className="bg-white/80 backdrop-blur-md border-b border-[#d4cbb8] sticky top-0 z-10 px-6 py-4 print:hidden">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#2c3e50] p-2 rounded-lg">
+              <BookIcon className="text-white size-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">Libro Cinese-Italiano</h1>
+              <p className="text-xs text-muted-foreground">Creatore di poesie e racconti bilingue</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleAddPage} className="flex items-center gap-2 bg-[#2c3e50] text-white px-4 py-2 rounded-lg hover:bg-[#34495e] transition-colors text-sm font-medium">
+              <Plus className="size-4" /> Aggiungi Pagina
+            </button>
+            <button onClick={handleExport} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Esporta JSON">
+              <Download className="size-5" />
+            </button>
+            <label className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" title="Importa JSON">
+              <Upload className="size-5" />
+              <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+            </label>
+            <button onClick={() => window.print()} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Stampa / PDF">
+              <Printer className="size-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 py-10">
+        <Book pages={pages} />
+        
+        <section className="mt-20 print:hidden">
+          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+            <Edit2 className="size-5" /> Gestione Pagine
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pages.map((page, idx) => (
+              <div key={page.id} className="bg-white border border-[#d4cbb8] rounded-xl p-4 flex justify-between items-center shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3">
+                  <span className="bg-gray-100 text-gray-500 text-xs font-bold size-6 flex items-center justify-center rounded-full">
+                    {idx + 1}
+                  </span>
+                  <div>
+                    <p className="font-medium text-sm truncate max-w-[150px]">
+                      {page.type === 'cover' ? 'Copertina' : (page.title || 'Senza titolo')}
+                    </p>
+                    <p className="text-xs text-muted-foreground italic truncate max-w-[150px]">
+                      {page.italianTitle || 'No traduzione'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={() => { setEditingPage(page); setIsEditorOpen(true); }} className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors">
+                    <Edit2 className="size-4" />
+                  </button>
+                  {page.type !== 'cover' && (
+                    <button onClick={() => handleDeletePage(page.id)} className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors">
+                      <Trash2 className="size-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      {isEditorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h3 className="text-xl font-bold">Modifica Pagina</h3>
+              <button onClick={() => setIsEditorOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                <X className="size-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Titolo Cinese</label>
+                  <input 
+                    className="w-full border rounded-lg px-3 py-2" 
+                    value={editingPage?.title || ''} 
+                    onChange={e => setEditingPage({...editingPage!, title: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Pinyin Titolo</label>
+                  <input 
+                    className="w-full border rounded-lg px-3 py-2" 
+                    value={editingPage?.pinyinTitle || ''} 
+                    onChange={e => setEditingPage({...editingPage!, pinyinTitle: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Linee Cinesi (Cinese | Pinyin)</label>
+                {editingPage?.chineseLines?.map((line, i) => (
+                  <div key={i} className="flex gap-2">
+                    <input 
+                      className="flex-1 border rounded-lg px-3 py-2" 
+                      placeholder="Cinese"
+                      value={line.chinese} 
+                      onChange={e => {
+                        const newLines = [...(editingPage.chineseLines || [])];
+                        newLines[i].chinese = e.target.value;
+                        setEditingPage({...editingPage, chineseLines: newLines});
+                      }}
+                    />
+                    <input 
+                      className="flex-1 border rounded-lg px-3 py-2" 
+                      placeholder="Pinyin"
+                      value={line.pinyin} 
+                      onChange={e => {
+                        const newLines = [...(editingPage.chineseLines || [])];
+                        newLines[i].pinyin = e.target.value;
+                        setEditingPage({...editingPage, chineseLines: newLines});
+                      }}
+                    />
+                    <button onClick={() => {
+                      const newLines = editingPage.chineseLines?.filter((_, idx) => idx !== i);
+                      setEditingPage({...editingPage, chineseLines: newLines});
+                    }} className="p-2 text-red-500">
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                ))}
+                <button 
+                  onClick={() => setEditingPage({...editingPage!, chineseLines: [...(editingPage?.chineseLines || []), {chinese: '', pinyin: ''}]})}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  + Aggiungi riga cinese
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Titolo Italiano</label>
+                <input 
+                  className="w-full border rounded-lg px-3 py-2" 
+                  value={editingPage?.italianTitle || ''} 
+                  onChange={e => setEditingPage({...editingPage!, italianTitle: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Linee Italiane</label>
+                {editingPage?.italianLines?.map((line, i) => (
+                  <div key={i} className="flex gap-2">
+                    <textarea 
+                      className="flex-1 border rounded-lg px-3 py-2" 
+                      value={line} 
+                      onChange={e => {
+                        const newLines = [...(editingPage.italianLines || [])];
+                        newLines[i] = e.target.value;
+                        setEditingPage({...editingPage, italianLines: newLines});
+                      }}
+                    />
+                    <button onClick={() => {
+                      const newLines = editingPage.italianLines?.filter((_, idx) => idx !== i);
+                      setEditingPage({...editingPage, italianLines: newLines});
+                    }} className="p-2 text-red-500">
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                ))}
+                <button 
+                  onClick={() => setEditingPage({...editingPage!, italianLines: [...(editingPage?.italianLines || []), '']})}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  + Aggiungi riga italiana
+                </button>
+              </div>
+            </div>
+            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+              <button onClick={() => setIsEditorOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">
+                Annulla
+              </button>
+              <button onClick={() => handleSavePage(editingPage!)} className="px-4 py-2 text-sm font-medium text-white bg-[#2c3e50] hover:bg-[#34495e] rounded-lg transition-colors">
+                Salva Pagina
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
