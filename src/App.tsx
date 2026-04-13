@@ -30,29 +30,31 @@ function cn(...classes: (string | boolean | undefined)[]) {
 
 // --- Components ---
 
-const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
+const Book: React.FC<{ pages: BookPage[], refreshCounter: number }> = React.memo(({ pages, refreshCounter }) => {
   const bookRef = useRef<HTMLDivElement>(null);
   const flipRef = useRef<PageFlip | null>(null);
 
   useEffect(() => {
-    console.log("Book component effect running with pages:", pages.length);
     if (!bookRef.current) return;
 
-    if (flipRef.current) {
-      try {
-        flipRef.current.destroy();
-        console.log("Old PageFlip destroyed");
-      } catch (e) {
-        console.warn("Error destroying PageFlip:", e);
+    // Cleanup function to destroy previous instance
+    const cleanup = () => {
+      if (flipRef.current) {
+        try {
+          flipRef.current.destroy();
+        } catch (e) {
+          console.warn("Cleanup error:", e);
+        }
+        flipRef.current = null;
       }
-      flipRef.current = null;
-    }
+    };
+
+    cleanup();
 
     const timer = setTimeout(() => {
       if (!bookRef.current) return;
 
       try {
-        console.log("Initializing PageFlip...");
         const flip = new PageFlip(bookRef.current, {
           width: 400,
           height: 550,
@@ -76,29 +78,20 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
         });
 
         const pageElements = bookRef.current.querySelectorAll('.page');
-        console.log("Found page elements:", pageElements.length);
         if (pageElements.length > 0) {
           flip.loadFromHTML(pageElements);
           flipRef.current = flip;
-          console.log("PageFlip loaded successfully");
-        } else {
-          console.warn("No page elements found to load into PageFlip");
         }
       } catch (error) {
         console.error("Failed to initialize PageFlip:", error);
       }
-    }, 500);
+    }, 300);
 
     return () => {
       clearTimeout(timer);
-      if (flipRef.current) {
-        try {
-          flipRef.current.destroy();
-        } catch (e) {}
-        flipRef.current = null;
-      }
+      cleanup();
     };
-  }, [pages]);
+  }, [pages, refreshCounter]);
 
   return (
     <div className="flex flex-col items-center min-h-[600px] w-full py-10 print:py-0">
@@ -151,7 +144,11 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
         ))}
       </div>
 
-      <div ref={bookRef} className="book-container print:hidden min-h-[550px]">
+      <div 
+        key={`book-container-${pages.length}-${pages.map(p => p.id).join('-')}-${refreshCounter}`} 
+        ref={bookRef} 
+        className="book-container print:hidden min-h-[550px]"
+      >
         {pages.map((page, index) => {
           if (page.type === 'cover') {
             return (
@@ -229,7 +226,7 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
       </div>
     </div>
   );
-};
+}, (prev, next) => prev.pages === next.pages && prev.refreshCounter === next.refreshCounter);
 
 const INITIAL_PAGES: BookPage[] = [
   {
@@ -263,9 +260,14 @@ const INITIAL_PAGES: BookPage[] = [
 ];
 
 export default function App() {
+  const [refreshCounter, setRefreshCounter] = useState(0);
   const [pages, setPages] = useState<BookPage[]>(INITIAL_PAGES);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<BookPage | null>(null);
+
+  const handleRefreshBook = () => {
+    setRefreshCounter(prev => prev + 1);
+  };
 
   const handleExportHTML = () => {
     const htmlContent = `
@@ -498,6 +500,9 @@ export default function App() {
             <button onClick={handleAddPage} className="flex items-center gap-2 bg-[#2c3e50] text-white px-4 py-2 rounded-lg hover:bg-[#34495e] transition-colors text-sm font-medium">
               <Plus className="size-4" /> Aggiungi Pagina
             </button>
+            <button onClick={handleRefreshBook} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-gray-600" title="Aggiorna Anteprima">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            </button>
             <button onClick={handleExportHTML} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-blue-600" title="Esporta HTML">
               <Download className="size-5" />
             </button>
@@ -516,7 +521,7 @@ export default function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-10">
-        <Book pages={pages} />
+        <Book pages={pages} refreshCounter={refreshCounter} />
         
         <section className="mt-20 print:hidden">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
