@@ -101,7 +101,7 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
                <div 
                  className="text-center py-20 bg-[#2c3e50] text-white rounded-lg" 
                  style={{ 
-                   backgroundImage: page.backgroundImage ? `url(${page.backgroundImage})` : 'none',
+                   backgroundImage: page.backgroundImage ? `url(${page.backgroundImage.startsWith('http') || page.backgroundImage.startsWith('/') ? page.backgroundImage : `/${page.backgroundImage}`})` : 'none',
                    backgroundSize: 'cover',
                    backgroundPosition: 'center'
                  }}
@@ -154,7 +154,7 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
         {pages.map((page, index) => {
           if (page.type === 'cover') {
             return (
-              <div key={page.id} className="page cover" style={{ backgroundImage: page.backgroundImage ? `url(${page.backgroundImage})` : 'none' }}>
+              <div key={page.id} className="page cover" style={{ backgroundImage: page.backgroundImage ? `url(${page.backgroundImage.startsWith('http') || page.backgroundImage.startsWith('/') ? page.backgroundImage : `/${page.backgroundImage}`})` : 'none' }}>
                 <div className="text-center p-10 bg-black/20 backdrop-blur-[2px] rounded-xl">
                   <h1 className="text-4xl font-zhi-mang mb-4 text-white drop-shadow-lg">{page.title}</h1>
                   <h2 className="text-xl font-cormorant italic opacity-90 text-white drop-shadow-md">{page.italianTitle}</h2>
@@ -236,7 +236,7 @@ const INITIAL_PAGES: BookPage[] = [
     type: 'cover',
     title: 'Libro Cinese-Italiano',
     italianTitle: 'Poesie e Racconti',
-    backgroundImage: '/cover.png'
+    backgroundImage: 'cover.png'
   },
   {
     id: 'page-1',
@@ -363,7 +363,7 @@ export default function App() {
         ${pages.map((page, index) => {
             if (page.type === 'cover') {
                 return `
-                    <div class="page cover" style="background-image: ${page.backgroundImage ? `url(${page.backgroundImage})` : 'none'}">
+                    <div class="page cover" style="background-image: ${page.backgroundImage ? `url(${page.backgroundImage.startsWith('/') ? page.backgroundImage.substring(1) : page.backgroundImage})` : 'none'}">
                         <div class="text-center p-10 bg-black/20 backdrop-blur-[2px] rounded-xl">
                             <h1 class="text-4xl font-zhi-mang mb-4 text-white">${page.title || ''}</h1>
                             <h2 class="text-xl font-cormorant italic opacity-90 text-white">${page.italianTitle || ''}</h2>
@@ -567,43 +567,20 @@ export default function App() {
               {editingPage?.type === 'cover' && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Immagine di Copertina</label>
-                    <div className="flex gap-2 items-center">
-                      <input 
-                        type="text"
-                        className="flex-1 border rounded-lg px-3 py-2 text-sm" 
-                        placeholder="URL immagine o percorso..."
-                        value={editingPage?.backgroundImage || ''} 
-                        onChange={e => setEditingPage({...editingPage!, backgroundImage: e.target.value})}
-                      />
-                      <label className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg cursor-pointer text-sm font-medium transition-colors flex items-center gap-2">
-                        <Upload className="size-4" /> Carica
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onload = (event) => {
-                                setEditingPage({...editingPage!, backgroundImage: event.target?.result as string});
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
+                    <label className="text-sm font-medium">Percorso Immagine di Copertina</label>
+                    <input 
+                      type="text"
+                      className="w-full border rounded-lg px-3 py-2 text-sm" 
+                      placeholder="es. cover.png"
+                      value={editingPage?.backgroundImage || ''} 
+                      onChange={e => setEditingPage({...editingPage!, backgroundImage: e.target.value})}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Usa il nome del file caricato nella cartella public (es. <strong>cover.png</strong>)
+                    </p>
                     {editingPage?.backgroundImage && (
                       <div className="mt-2 relative w-32 h-44 rounded-lg overflow-hidden border shadow-sm">
-                        <img src={editingPage.backgroundImage} className="w-full h-full object-cover" alt="Preview" />
-                        <button 
-                          onClick={() => setEditingPage({...editingPage!, backgroundImage: ''})}
-                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
-                        >
-                          <X className="size-3" />
-                        </button>
+                        <img src={editingPage.backgroundImage.startsWith('/') ? editingPage.backgroundImage : `/${editingPage.backgroundImage}`} className="w-full h-full object-cover" alt="Preview" />
                       </div>
                     )}
                   </div>
