@@ -98,9 +98,18 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
         {pages.map((page) => (
           <div key={page.id} className="bg-white p-8 border border-gray-200 rounded-lg shadow-sm break-after-page">
              {page.type === 'cover' ? (
-               <div className="text-center py-20">
-                 <h1 className="text-5xl font-zhi-mang mb-4">{page.title}</h1>
-                 <h2 className="text-2xl font-cormorant italic opacity-80">{page.italianTitle}</h2>
+               <div 
+                 className="text-center py-20 bg-[#2c3e50] text-white rounded-lg" 
+                 style={{ 
+                   backgroundImage: page.backgroundImage ? `url(${page.backgroundImage})` : 'none',
+                   backgroundSize: 'cover',
+                   backgroundPosition: 'center'
+                 }}
+               >
+                 <div className="bg-black/30 p-10 rounded-lg backdrop-blur-sm inline-block">
+                   <h1 className="text-5xl font-zhi-mang mb-4">{page.title}</h1>
+                   <h2 className="text-2xl font-cormorant italic opacity-90">{page.italianTitle}</h2>
+                 </div>
                </div>
              ) : (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -146,12 +155,10 @@ const Book: React.FC<{ pages: BookPage[] }> = ({ pages }) => {
           if (page.type === 'cover') {
             return (
               <div key={page.id} className="page cover" style={{ backgroundImage: page.backgroundImage ? `url(${page.backgroundImage})` : 'none' }}>
-                {!page.backgroundImage && (
-                  <div className="text-center p-10">
-                    <h1 className="text-4xl font-zhi-mang mb-4">{page.title}</h1>
-                    <h2 className="text-xl font-cormorant italic opacity-80">{page.italianTitle}</h2>
-                  </div>
-                )}
+                <div className="text-center p-10 bg-black/20 backdrop-blur-[2px] rounded-xl">
+                  <h1 className="text-4xl font-zhi-mang mb-4 text-white drop-shadow-lg">{page.title}</h1>
+                  <h2 className="text-xl font-cormorant italic opacity-90 text-white drop-shadow-md">{page.italianTitle}</h2>
+                </div>
               </div>
             );
           }
@@ -229,7 +236,7 @@ const INITIAL_PAGES: BookPage[] = [
     type: 'cover',
     title: 'Libro Cinese-Italiano',
     italianTitle: 'Poesie e Racconti',
-    backgroundImage: 'cover.png'
+    backgroundImage: '/cover.png'
   },
   {
     id: 'page-1',
@@ -260,7 +267,166 @@ export default function App() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<BookPage | null>(null);
 
-  const handleExport = () => {
+  const handleExportHTML = () => {
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libro Cinese-Italiano - Interattivo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Long+Cang&family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@100..900&family=Single+Day&family=Nanum+Brush+Script&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { 
+            background-color: #f5f0e6; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .font-zhi-mang { font-family: 'Zhi Mang Xing', cursive; }
+        .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+        .font-long-cang { font-family: 'Long Cang', cursive; }
+        .font-ma-shan { font-family: 'Ma Shan Zheng', cursive; }
+        .font-single-day { font-family: 'Single Day', cursive; }
+        .font-nanum { font-family: 'Nanum Brush Script', cursive; }
+
+        .book-container {
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+
+        .page {
+            background-color: #fdfaf6;
+            padding: 40px;
+            border: 1px solid #e0d8c8;
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .page.--left {
+            box-shadow: inset -10px 0 20px rgba(0,0,0,0.05);
+            border-right: 1px solid #d4cbb8;
+        }
+
+        .page.--right {
+            box-shadow: inset 10px 0 20px rgba(0,0,0,0.05);
+            border-left: 1px solid #d4cbb8;
+        }
+
+        .cover {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .page-number {
+            position: absolute;
+            bottom: 20px;
+            font-size: 12px;
+            color: #8b7e6a;
+        }
+        .page.--left .page-number { left: 20px; }
+        .page.--right .page-number { right: 20px; }
+
+        ruby rt { 
+            font-family: 'Long Cang', cursive; 
+            color: #8b7e6a; 
+            font-size: 0.5em;
+        }
+
+        .author-note {
+            border-left: 3px solid #d4c8a8;
+            background: rgba(255,252,245,0.8);
+            padding: 10px;
+            margin-bottom: 20px;
+            font-family: 'Long Cang', cursive;
+            font-size: 1.2rem;
+            color: #5a4a3a;
+        }
+    </style>
+</head>
+<body>
+    <div id="book" class="book-container">
+        ${pages.map((page, index) => {
+            if (page.type === 'cover') {
+                return `
+                    <div class="page cover" style="background-image: ${page.backgroundImage ? `url(${page.backgroundImage})` : 'none'}">
+                        <div class="text-center p-10 bg-black/20 backdrop-blur-[2px] rounded-xl">
+                            <h1 class="text-4xl font-zhi-mang mb-4 text-white">${page.title || ''}</h1>
+                            <h2 class="text-xl font-cormorant italic opacity-90 text-white">${page.italianTitle || ''}</h2>
+                        </div>
+                    </div>
+                `;
+            }
+            return `
+                <div class="page --left">
+                    <div class="flex flex-col items-center w-full h-full">
+                        <h1 class="font-zhi-mang text-3xl mb-4">
+                            <ruby>${page.title || ''}<rt>${page.pinyinTitle || ''}</rt></ruby>
+                        </h1>
+                        <div class="font-ma-shan text-4xl leading-relaxed text-center my-auto">
+                            ${page.chineseLines?.map(line => `<div><ruby>${line.chinese}<rt>${line.pinyin}</rt></ruby></div>`).join('')}
+                        </div>
+                        ${page.author ? `<div class="mt-auto font-zhi-mang text-xl text-gray-500"><ruby>${page.author}<rt>${page.pinyinAuthor || ''}</rt></ruby></div>` : ''}
+                    </div>
+                    <div class="page-number">${index * 2 + 1}</div>
+                </div>
+                <div class="page --right">
+                    <div class="flex flex-col h-full">
+                        ${page.note ? `<div class="author-note">"${page.note}"</div>` : ''}
+                        <div class="text-center my-auto">
+                            <h2 class="text-red-600 text-xs uppercase tracking-widest mb-4 font-single-day">Traduzione Italiana</h2>
+                            <h3 class="text-2xl font-bold mb-4">${page.italianTitle || ''}</h3>
+                            <div class="font-nanum text-2xl leading-snug">
+                                ${page.italianLines?.map(line => `<p class="mb-1">${line}</p>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="page-number">${index * 2 + 2}</div>
+                </div>
+            `;
+        }).join('')}
+    </div>
+
+    <script>
+        window.onload = () => {
+            const pageFlip = new St.PageFlip(document.getElementById('book'), {
+                width: 400,
+                height: 550,
+                size: "fixed",
+                showCover: true,
+                maxShadowOpacity: 0.5,
+                showPageCorners: true
+            });
+            pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+        };
+    </script>
+</body>
+</html>`;
+    
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'libro_cinese_italiano.html';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportJSON = () => {
     const dataStr = JSON.stringify(pages, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     const exportFileDefaultName = 'libro_cinese_italiano.json';
@@ -332,7 +498,10 @@ export default function App() {
             <button onClick={handleAddPage} className="flex items-center gap-2 bg-[#2c3e50] text-white px-4 py-2 rounded-lg hover:bg-[#34495e] transition-colors text-sm font-medium">
               <Plus className="size-4" /> Aggiungi Pagina
             </button>
-            <button onClick={handleExport} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Esporta JSON">
+            <button onClick={handleExportHTML} className="p-2 hover:bg-gray-100 rounded-lg transition-colors text-blue-600" title="Esporta HTML">
+              <Download className="size-5" />
+            </button>
+            <button onClick={handleExportJSON} className="p-2 hover:bg-gray-100 rounded-lg transition-colors" title="Esporta JSON">
               <Download className="size-5" />
             </button>
             <label className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" title="Importa JSON">
@@ -395,6 +564,18 @@ export default function App() {
               </button>
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
+              {editingPage?.type === 'cover' && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">URL Immagine di Copertina</label>
+                  <input 
+                    className="w-full border rounded-lg px-3 py-2" 
+                    placeholder="es. /cover.png o un link esterno"
+                    value={editingPage?.backgroundImage || ''} 
+                    onChange={e => setEditingPage({...editingPage!, backgroundImage: e.target.value})}
+                  />
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Titolo Cinese</label>
