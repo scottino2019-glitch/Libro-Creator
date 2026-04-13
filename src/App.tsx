@@ -491,6 +491,37 @@ export default function App() {
                   + Aggiungi riga italiana
                 </button>
               </div>
+
+              <div className="grid grid-cols-2 gap-4 border-t pt-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Autore (Cinese)</label>
+                  <input 
+                    className="w-full border rounded-lg px-3 py-2" 
+                    placeholder="es. 白居易"
+                    value={editingPage?.author || ''} 
+                    onChange={e => setEditingPage({...editingPage!, author: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Autore (Pinyin)</label>
+                  <input 
+                    className="w-full border rounded-lg px-3 py-2" 
+                    placeholder="es. bái jū yì"
+                    value={editingPage?.pinyinAuthor || ''} 
+                    onChange={e => setEditingPage({...editingPage!, pinyinAuthor: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Nota dell'Autore (Italiano)</label>
+                <textarea 
+                  className="w-full border rounded-lg px-3 py-2 min-h-[100px]" 
+                  placeholder="Inserisci una nota o un commento alla poesia..."
+                  value={editingPage?.note || ''} 
+                  onChange={e => setEditingPage({...editingPage!, note: e.target.value})}
+                />
+              </div>
             </div>
             <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
               <button onClick={() => setIsEditorOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">
