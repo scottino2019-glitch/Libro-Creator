@@ -565,14 +565,48 @@ export default function App() {
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
               {editingPage?.type === 'cover' && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">URL Immagine di Copertina</label>
-                  <input 
-                    className="w-full border rounded-lg px-3 py-2" 
-                    placeholder="es. /cover.png o un link esterno"
-                    value={editingPage?.backgroundImage || ''} 
-                    onChange={e => setEditingPage({...editingPage!, backgroundImage: e.target.value})}
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Immagine di Copertina</label>
+                    <div className="flex gap-2 items-center">
+                      <input 
+                        type="text"
+                        className="flex-1 border rounded-lg px-3 py-2 text-sm" 
+                        placeholder="URL immagine o percorso..."
+                        value={editingPage?.backgroundImage || ''} 
+                        onChange={e => setEditingPage({...editingPage!, backgroundImage: e.target.value})}
+                      />
+                      <label className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg cursor-pointer text-sm font-medium transition-colors flex items-center gap-2">
+                        <Upload className="size-4" /> Carica
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (event) => {
+                                setEditingPage({...editingPage!, backgroundImage: event.target?.result as string});
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {editingPage?.backgroundImage && (
+                      <div className="mt-2 relative w-32 h-44 rounded-lg overflow-hidden border shadow-sm">
+                        <img src={editingPage.backgroundImage} className="w-full h-full object-cover" alt="Preview" />
+                        <button 
+                          onClick={() => setEditingPage({...editingPage!, backgroundImage: ''})}
+                          className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
