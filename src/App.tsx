@@ -356,10 +356,11 @@ export default function App() {
             border-left: 3px solid #d4c8a8;
             background: rgba(255,252,245,0.8);
             padding: 10px;
-            margin-bottom: 20px;
             font-family: 'Long Cang', cursive;
-            font-size: 1.2rem;
-            color: #5a4a3a;
+            font-size: 1rem; 
+    line-height: 1.4;
+    color: #5a4a3a; 
+    margin-bottom: 15px;
         }
     </style>
 </head>
@@ -393,8 +394,8 @@ export default function App() {
                     <div class="flex flex-col h-full">
                         ${page.note ? `<div class="author-note">"${page.note}"</div>` : ''}
                         <div class="text-center my-auto">
-                            <h2 class="text-red-600 text-xs uppercase tracking-widest mb-4 font-single-day">Traduzione Italiana</h2>
-                            <h3 class="text-2xl font-bold mb-4">${page.italianTitle || ''}</h3>
+                            <h2 class="text-red-600 text-xs uppercase tracking-widest mb-2 font-single-day">Traduzione Italiana</h2>
+                            <h3 class="text-xl font-bold mb-2">${page.italianTitle || ''}</h3>
                             <div class="font-nanum text-2xl leading-snug">
                                 ${page.italianLines?.map(line => `<p class="mb-1">${line}</p>`).join('')}
                             </div>
