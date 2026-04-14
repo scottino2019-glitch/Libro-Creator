@@ -307,7 +307,7 @@ export default function App() {
 
         .page {
             background-color: #fdfaf6;
-            padding: 40px;
+            padding: 20px 40px 20px 40px;
             border: 1px solid #e0d8c8;
             box-sizing: border-box;
             overflow: hidden;
