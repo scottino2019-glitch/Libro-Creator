@@ -383,7 +383,7 @@ export default function App() {
                         <h1 class="font-zhi-mang text-3xl mb-4">
                             <ruby>${page.title || ''}<rt>${page.pinyinTitle || ''}</rt></ruby>
                         </h1>
-                        <div class="font-ma-shan text-4xl leading-relaxed text-center my-auto">
+                        <div class="font-ma-shan text-3xl leading-relaxed text-center my-auto">
                             ${page.chineseLines?.map(line => `<div><ruby>${line.chinese}<rt>${line.pinyin}</rt></ruby></div>`).join('')}
                         </div>
                         ${page.author ? `<div class="mt-auto font-zhi-mang text-xl text-gray-500"><ruby>${page.author}<rt>${page.pinyinAuthor || ''}</rt></ruby></div>` : ''}
@@ -396,7 +396,7 @@ export default function App() {
                         <div class="text-center my-auto">
                             <h2 class="text-red-600 text-xs uppercase tracking-widest mb-2 font-single-day">Traduzione Italiana</h2>
                             <h3 class="text-xl font-bold mb-2">${page.italianTitle || ''}</h3>
-                            <div class="font-nanum text-2xl leading-snug">
+                            <div class="font-nanum text-xl leading-snug">
                                 ${page.italianLines?.map(line => `<p class="mb-1">${line}</p>`).join('')}
                             </div>
                         </div>
